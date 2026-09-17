@@ -14,6 +14,10 @@ from pyspark.sql.types import (
 )
 from pyspark.sql.window import Window
 
+# PySpark 4.x enables ANSI mode by default: .cast() throws on malformed input
+# instead of returning null. try_cast is available via F.expr() and returns
+# null on failure — the permissive semantics we need for Silver validation.
+
 # ---------------------------------------------------------------------------
 # Silver schema — typed, explicit, never inferred.
 # nullable=False marks fields our validation rules treat as required.
@@ -52,7 +56,7 @@ def _cast(df: DataFrame) -> DataFrame:
         df.withColumn("played_at_c", F.to_timestamp("played_at"))
         .withColumn("created_at_c", F.to_timestamp("created_at"))
         .withColumn("updated_at_c", F.to_timestamp("updated_at"))
-        .withColumn("ms_played_c", F.col("ms_played").cast(LongType()))
+        .withColumn("ms_played_c", F.expr("try_cast(ms_played AS BIGINT)"))
     )
 
 
