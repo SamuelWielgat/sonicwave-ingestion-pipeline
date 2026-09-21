@@ -26,7 +26,7 @@ SILVER_SCHEMA = StructType(
         StructField("country", StringType(), True),
         StructField("plan_tier", StringType(), True),
         StructField("valid_from", TimestampType(), False),
-        StructField("valid_to", TimestampType(), True),    # null = current version
+        StructField("valid_to", TimestampType(), True),  # null = current version
         StructField("is_current", BooleanType(), False),
         StructField("ingested_at", TimestampType(), True),
         StructField("source_file", StringType(), True),
@@ -54,9 +54,8 @@ _VERSION_COLS: list[str] = [
 
 def _cast(df: DataFrame) -> DataFrame:
     """Cast string timestamp columns to TimestampType."""
-    return (
-        df.withColumn("created_at_c", F.to_timestamp("created_at"))
-        .withColumn("updated_at_c", F.to_timestamp("updated_at"))
+    return df.withColumn("created_at_c", F.to_timestamp("created_at")).withColumn(
+        "updated_at_c", F.to_timestamp("updated_at")
     )
 
 
@@ -93,11 +92,7 @@ def _dedup(df: DataFrame) -> DataFrame:
     w = Window.partitionBy("user_id").orderBy(
         F.coalesce(F.col("updated_at_c"), F.col("created_at_c")).asc_nulls_last()
     )
-    return (
-        df.withColumn("_rn", F.row_number().over(w))
-        .filter(F.col("_rn") == 1)
-        .drop("_rn")
-    )
+    return df.withColumn("_rn", F.row_number().over(w)).filter(F.col("_rn") == 1).drop("_rn")
 
 
 def _apply_scd2(incoming: DataFrame, existing: DataFrame) -> DataFrame:
@@ -129,9 +124,7 @@ def _apply_scd2(incoming: DataFrame, existing: DataFrame) -> DataFrame:
 
     # Recompute SCD2 fields for the full history.
     w_scd2 = Window.partitionBy("user_id").orderBy("valid_from")
-    return all_versions.withColumn(
-        "valid_to", F.lead("valid_from").over(w_scd2)
-    ).withColumn(
+    return all_versions.withColumn("valid_to", F.lead("valid_from").over(w_scd2)).withColumn(
         "is_current", F.col("valid_to").isNull()
     )
 
@@ -181,9 +174,7 @@ def run(
     Silver history, and rewrites the complete dimension — all SCD2 fields are
     recomputed from scratch on every run, making re-runs safe.
     """
-    df = spark.read.parquet(bronze_path).filter(
-        F.col("snapshot_date") == snapshot_date
-    )
+    df = spark.read.parquet(bronze_path).filter(F.col("snapshot_date") == snapshot_date)
 
     df_cast = _cast(df)
     df_flagged = _validate(df_cast)

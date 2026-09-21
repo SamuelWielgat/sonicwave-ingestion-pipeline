@@ -100,11 +100,7 @@ def _dedup(df: DataFrame) -> DataFrame:
     Rows with a null created_at are ranked last (asc_nulls_last).
     """
     w = Window.partitionBy("play_id").orderBy(F.col("created_at_c").asc_nulls_last())
-    return (
-        df.withColumn("_rn", F.row_number().over(w))
-        .filter(F.col("_rn") == 1)
-        .drop("_rn")
-    )
+    return df.withColumn("_rn", F.row_number().over(w)).filter(F.col("_rn") == 1).drop("_rn")
 
 
 def _conform(df: DataFrame) -> DataFrame:
@@ -172,9 +168,7 @@ def run(
     Reads only the snapshot_date partition from Bronze, so this stage is
     independently re-runnable without re-landing Bronze.
     """
-    df = spark.read.parquet(bronze_path).filter(
-        F.col("snapshot_date") == snapshot_date
-    )
+    df = spark.read.parquet(bronze_path).filter(F.col("snapshot_date") == snapshot_date)
 
     df_cast = _cast(df)
     df_flagged = _validate(df_cast)
