@@ -1,14 +1,19 @@
 repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.4.4
+    rev: v0.9.10
     hooks:
       - id: ruff
         args: [--fix]
+        files: ^(src|scripts)/
       - id: ruff-format
+        files: ^(src|scripts)/
 
-  - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.10.0
+  - repo: local
     hooks:
       - id: mypy
-        additional_dependencies: [pyspark-stubs]
-        args: [--ignore-missing-imports]
+        name: mypy
+        entry: uv run mypy
+        language: system
+        pass_filenames: false
+        args: [src/]
+        types: [python]
