@@ -15,7 +15,7 @@ import argparse
 
 from pyspark.sql import SparkSession
 
-from sonicwave_ingestion.users import bronze
+from sonicwave_ingestion.users import bronze, silver
 
 
 def main() -> None:
@@ -52,6 +52,14 @@ def main() -> None:
         source_path=args.source,
         snapshot_date=args.snapshot_date,
         output_path=f"{args.output_dir}/bronze/users",
+    )
+
+    silver.run(
+        spark,
+        bronze_path=f"{args.output_dir}/bronze/users",
+        snapshot_date=args.snapshot_date,
+        silver_output=f"{args.output_dir}/silver/users",
+        quarantine_output=f"{args.output_dir}/quarantine/users",
     )
 
     spark.stop()
