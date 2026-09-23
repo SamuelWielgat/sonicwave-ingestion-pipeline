@@ -8,10 +8,8 @@ from __future__ import annotations
 
 from datetime import date, datetime
 
-import pytest
 from pyspark.sql import SparkSession
 from pyspark.sql.types import (
-    BooleanType,
     DateType,
     StringType,
     StructField,
@@ -184,7 +182,8 @@ def test_unchanged_user_no_new_version(spark: SparkSession) -> None:
 def test_rerun_same_snapshot_idempotent(spark: SparkSession) -> None:
     """Running _apply_scd2 twice with the same incoming must yield the same result.
 
-    This is the idempotency guarantee: apply(incoming, apply(incoming, empty)) == apply(incoming, empty).
+    This is the idempotency guarantee:
+    apply(incoming, apply(incoming, empty)) == apply(incoming, empty).
     """
     incoming = _incoming(spark, valid_from=_T0, snapshot_date=_D0)
 
@@ -222,7 +221,13 @@ def test_three_versions_chain(spark: SparkSession) -> None:
 def test_valid_from_prefers_updated_at(spark: SparkSession) -> None:
     """valid_from must be updated_at when present, falling back to created_at."""
     df = spark.createDataFrame(
-        [("u1", "u@test.com", "PL", "free", "2026-01-01T08:00:00", "2026-03-02T09:00:00", None, None, _D1)],
+        [
+            (
+                "u1", "u@test.com", "PL", "free",
+                "2026-01-01T08:00:00", "2026-03-02T09:00:00",
+                None, None, _D1,
+            )
+        ],
         schema=_BRONZE_SCHEMA,
     )
     df_cast = _cast(df)
